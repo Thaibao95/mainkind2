@@ -1,0 +1,24 @@
+Options -Indexes
+RewriteEngine On
+
+# Block deployment internals and PHP application internals from direct web access.
+RewriteRule (^|/)\.mankind-bundle- - [F,L]
+RewriteRule ^\.mankind-release$ - [F,L]
+RewriteRule ^storage/ - [F,L]
+RewriteRule ^config/ - [F,L]
+RewriteRule ^app/ - [F,L]
+RewriteRule ^tools/ - [F,L]
+
+# Serve public assets and SEO files directly from /public.
+RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+RewriteRule ^(robots\.txt|sitemap\.xml)$ public/$1 [L]
+
+# Route all application URLs through the bootstrap/front controller.
+RewriteRule ^ index.php [QSA,L]
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
