@@ -1,0 +1,55 @@
+<?php
+declare(strict_types=1);
+session_start();
+
+const CLINIC_NAME = 'Mankind Dentistry 2';
+const PHONE = '(657) 390-1268';
+const PHONE_HREF = '+16573901268';
+const EMAIL = 'info@mankinddentistry2.com';
+const ADDRESS = '2061 W Ball Road, Suite 101–102, Anaheim, CA 92804';
+const SITE_URL = 'https://mankinddentistry2.com';
+
+function e(string $v): string { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); }
+function csrf(): string { if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(24)); return $_SESSION['csrf']; }
+function langPath(string $path, string $lang): string { $path='/' . ltrim($path,'/'); return $lang==='vi' ? '/vi'.($path==='/'?'':$path) : $path; }
+function currentPath(): array {
+    $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $parts = array_values(array_filter(explode('/', trim($path,'/')), fn($v)=>$v!==''));
+    $lang = (($parts[0] ?? '') === 'vi') ? 'vi' : 'en';
+    if ($lang==='vi') array_shift($parts);
+    return [$lang, $parts];
+}
+function jsonStorePath(): string { return dirname(__DIR__) . '/private/mankind-appointments.json'; }
+function saveAppointment(array $row): bool {
+    $file=jsonStorePath(); $dir=dirname($file);
+    if (!is_dir($dir)) @mkdir($dir,0750,true);
+    $fh=@fopen($file,'c+'); if(!$fh) return false;
+    $ok=false;
+    if(flock($fh,LOCK_EX)){
+        $raw=stream_get_contents($fh); $rows=$raw?json_decode($raw,true):[]; if(!is_array($rows))$rows=[];
+        $rows[]=$row; rewind($fh); ftruncate($fh,0); $ok=fwrite($fh,json_encode($rows,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE))!==false; fflush($fh); flock($fh,LOCK_UN);
+    }
+    fclose($fh); return $ok;
+}
+
+$services = [
+ 'general-dentistry'=>['General Dentistry','Nha khoa tổng quát','Preventive exams, cleanings, restorative care and practical treatment planning for long-term oral health.','Khám, vệ sinh, phục hồi và lập kế hoạch điều trị thực tế nhằm duy trì sức khỏe răng miệng lâu dài.'],
+ 'digital-smile-design'=>['Digital Smile Design','Thiết kế nụ cười kỹ thuật số','Digital planning to help visualize proportions, shape and esthetic goals before treatment begins.','Lập kế hoạch kỹ thuật số giúp hình dung tỷ lệ, hình dáng và mục tiêu thẩm mỹ trước khi điều trị.'],
+ 'advanced-dental-implants'=>['Advanced Dental Implants','Cấy ghép Implant nâng cao','Implant treatment planning from single-tooth replacement to complex full-arch rehabilitation.','Lập kế hoạch Implant từ phục hồi một răng đến phục hồi toàn hàm phức tạp.'],
+ 'ultra-thin-porcelain-veneers'=>['Ultra-Thin Porcelain Veneers','Mặt dán sứ siêu mỏng','Conservative porcelain veneer options focused on natural form, color and smile harmony.','Giải pháp veneer sứ bảo tồn mô răng, chú trọng hình thể, màu sắc và sự hài hòa của nụ cười.'],
+ 'removable-implant-dentures'=>['Removable Implant Dentures','Hàm tháo lắp trên Implant','Implant-retained removable prosthetic options designed to improve stability and function.','Giải pháp hàm tháo lắp lưu giữ trên Implant nhằm tăng độ ổn định và chức năng ăn nhai.'],
+ 'bar-supported-implant-dentures'=>['Bar-Supported Implant Dentures','Hàm Implant nâng đỡ bằng thanh bar','Bar-supported solutions for patients who need greater retention than conventional removable dentures.','Giải pháp thanh bar giúp tăng độ lưu giữ so với hàm tháo lắp thông thường.'],
+ 'aesthetic-porcelain-crowns'=>['Premium Aesthetic Porcelain Crowns','Mão sứ thẩm mỹ cao cấp','Tooth-colored crown restorations designed to balance strength, precision and natural appearance.','Phục hình mão sứ màu răng cân bằng độ bền, độ chính xác và vẻ tự nhiên.'],
+ 'all-on-4-all-on-6'=>['Full-Arch Restoration – All-on-4 / All-on-6','Phục hồi toàn hàm All-on-4 / All-on-6','Full-arch implant rehabilitation planned around bone condition, function, esthetics and long-term maintenance.','Phục hồi toàn hàm trên Implant dựa trên tình trạng xương, chức năng, thẩm mỹ và kế hoạch duy trì lâu dài.'],
+ 'fixed-implant-prosthetics'=>['Fixed Implant Prosthetics','Phục hình cố định trên Implant','Hybrid and zirconia bridge options for appropriate implant-supported full-arch cases.','Lựa chọn cầu Hybrid hoặc Zirconia cho các trường hợp toàn hàm trên Implant phù hợp.'],
+];
+
+$T=[
+'en'=>[
+'nav_home'=>'Home','nav_doctor'=>'Dr. Nguyen','nav_services'=>'Services','nav_contact'=>'Contact','book'=>'Book Appointment','call'=>'Call Now',
+'hero_kicker'=>'Implant · Cosmetic · Restorative Dentistry','hero_title'=>'Precision dentistry. One doctor. One treatment vision.','hero_text'=>'Advanced dental care in Anaheim led by Dr. Anthony Thuan Nguyen, with a focus on implants, cosmetic reconstruction and comprehensive restorative treatment.','explore'=>'Explore Services','meet'=>'Meet Dr. Nguyen',
+'why_title'=>'A focused, doctor-led experience','why_text'=>'Your treatment planning stays centered around one experienced dentist—from diagnosis and strategy through restoration and follow-up.','years'=>'30+ Years','years_t'=>'Clinical experience','implants'=>'3,000+','implants_t'=>'Implants placed*','since'=>'Since 1992','since_t'=>'California practice','school'=>'1991','school_t'=>'Northwestern Dental School',
+'services_title'=>'Comprehensive care with advanced restorative options','services_text'=>'From everyday dentistry to full-arch implant rehabilitation, treatment is planned around function, comfort and natural-looking results.','learn'=>'Learn more',
+'doctor_title'=>'Dr. Anthony Thuan Nguyen, DDS','doctor_sub'=>'Implant & Cosmetic Specialist','doctor_intro'=>'Northwestern University Dental School, Class of 1991. Dr. Nguyen has decades of clinical experience in general and advanced dentistry, including service in the U.S. Navy Dental Corps and leadership roles in dental practices across California.','credentials'=>'Professional background','expertise'=>'Clinical expertise','implant_exp'=>'Implant experience','cred_1'=>'California Dental License B41290 (since 1992)','cred_2'=>'Member, American Dental Association since 1992','cred_3'=>'Member, California Dental Association since 1992','cred_4'=>'Graduate, Academy of Minimally Invasive Implantology','exp_1'=>'Root canal treatments, crowns & bridges','exp_2'=>'Surgical extractions, including impacted wisdom teeth','exp_3'=>'Periodontal therapy and full-mouth rehabilitation','exp_4'=>'Cosmetic and functional reconstruction','implant_1'=>'Single implant through full-arch treatment planning','implant_2'=>'All-on-4 / All-on-6 rehabilitation','implant_3'=>'Crestal and lateral sinus lift, ridge splitting and bone grafting','implant_4'=>'Final implant restorations including fixed zirconia and veneer-based reconstruction',
+'visit'=>'Visit Our Anaheim Office','hours'=>'Office Hours','mon'=>'Mon – Sat','mon_h'=>'9:00 AM – 5:00 PM','sun'=>'Sunday','sun_h'=>'By appointment','address'=>'Address','phone'=>'Phone','email'=>'Email',
+'appt_title'=>'Request an Appointment','appt_text'=>'Send your preferred date and time. Our office will contact you to confirm availability.','name'=>'Full name','date'=>'Preferred date','time'=>'Preferred time','phone_f'=>'Phone number','email_f'=>'Email address','service'=>'Service of int
