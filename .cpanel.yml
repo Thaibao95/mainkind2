@@ -1,0 +1,7 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/l3bqrlf62h5p/public_html/
+    - /bin/cp -f .htaccess "$DEPLOYPATH/.htaccess"
+    - /bin/cp -f index.php "$DEPLOYPATH/index.php"
+    - /bin/cp -f .mankind-bundle-*.txt "$DEPLOYPATH/"
